@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns="http://www.phonegap.com/ns/plugins/1.0" id="com.ingenious.cordova.IngEncodeM4a" version="1.0.0">
+  <engines>
+    <engine name="cordova" version=">=3.0.0" />
+  </engines>
+  <name>IngEncodeM4a</name>
+  <description>Plugin for iOS to encode wav to m4a.</description>
+  <author>Kavita Mevada</author>
+  <keywords>iOS Audio Recording Encoding Compression</keywords>
+  <license></license>
+
+  <!-- JavaScript interface -->
+  <js-module src="www/IngEncodeM4a.js" name="IngEncodeM4a" target="www/IngEncodeM4a.js">
+    <clobbers target="window.IngEncodeM4a" />
+  </js-module>
+
+  <!-- ios -->
+  <platform name="ios">
+    <config-file target="config.xml" parent="plugins">
+      <feature name="IngEncodeM4a">
+        <param name="ios-package" value="IngEncodeM4a"/>
+        <param name="onload" value="true" />
+      </feature>
+    </config-file>
+    <header-file src="src/ios/IngEncodeM4a.h" />
+    <source-file src="src/ios/IngEncodeM4a.m" />
+  </platform>
+</plugin>
