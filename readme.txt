@@ -1,5 +1,5 @@
 ## PhoneGap/Cordova AudioEncode Plugin
- * Original by Kavita Mevada
+ * Original by Kavita Mevada (Ingenious Softtech)
  
 ## About this Plugin
 
@@ -38,5 +38,3 @@ var failm4a = function(statusCode) {
   cordova plugin add  ``` https://github.com/ingenioussofttech/IngEncodeM4a.git
 
 
-
-The MIT License
