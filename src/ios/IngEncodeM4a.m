@@ -59,10 +59,10 @@
         memset(&channelLayout, 0, sizeof(AudioChannelLayout));
         channelLayout.mChannelLayoutTag = kAudioChannelLayoutTag_Stereo;
         
-        // use different values to affect the downsampling/compression
+        // use different values to affect the downsampling/compression  //44100.0
         NSDictionary *outputSettings = [NSDictionary dictionaryWithObjectsAndKeys:
                                         [NSNumber numberWithInt: kAudioFormatMPEG4AAC], AVFormatIDKey,
-                                        [NSNumber numberWithFloat:44100.0], AVSampleRateKey,
+                                        [NSNumber numberWithFloat:24000.0], AVSampleRateKey,
                                         [NSNumber numberWithInt:2], AVNumberOfChannelsKey,
                                         [NSNumber numberWithInt:128000], AVEncoderBitRateKey,
                                         [NSData dataWithBytes:&channelLayout length:sizeof(AudioChannelLayout)], AVChannelLayoutKey,
@@ -91,7 +91,7 @@
                     }
                 } else {
                     [writerInput markAsFinished];
-                    
+                     CDVPluginResult* pluginResult = nil;
                     switch ([reader status]) {
                         case AVAssetReaderStatusReading:
                             break;
@@ -102,7 +102,8 @@
                             NSLog(@"Writer completed");
                             [writer endSessionAtSourceTime:asset.duration];
                             [writer finishWriting];
-                            
+                            pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+                            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
                             //                     NSData *data = [NSData dataWithContentsOfFile:exportPath];
                             //                     NSLog(@"Data: %@", data);
                             
