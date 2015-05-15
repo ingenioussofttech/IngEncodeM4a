@@ -33,8 +33,91 @@
     }
     else
     {
-        NSURL* srcUrl = [NSURL fileURLWithPath:srcpath];
+        
+        
+        AVAsset *asset = [AVAsset assetWithURL:[NSURL fileURLWithPath:srcpath]];
+        
+        NSURL *exportURL = [NSURL fileURLWithPath:targetpath];
+        
+        // reader
+        NSError *readerError = nil;
+        AVAssetReader *reader = [[AVAssetReader alloc] initWithAsset:asset
+                                                               error:&readerError];
+        
+        AVAssetTrack *track = [[asset tracksWithMediaType:AVMediaTypeAudio] objectAtIndex:0];
+        AVAssetReaderTrackOutput *readerOutput = [[AVAssetReaderTrackOutput alloc] initWithTrack:track
+                                                                                  outputSettings:nil];
+        [reader addOutput:readerOutput];
+        
+        // writer
+        NSError *writerError = nil;
+        AVAssetWriter *writer = [[AVAssetWriter alloc] initWithURL:exportURL
+                                                          fileType:AVFileTypeAppleM4A
+                                                             error:&writerError];
+        
+        AudioChannelLayout channelLayout;
+        memset(&channelLayout, 0, sizeof(AudioChannelLayout));
+        channelLayout.mChannelLayoutTag = kAudioChannelLayoutTag_Stereo;
+        
+        // use different values to affect the downsampling/compression
+        NSDictionary *outputSettings = [NSDictionary dictionaryWithObjectsAndKeys:
+                                        [NSNumber numberWithInt: kAudioFormatMPEG4AAC], AVFormatIDKey,
+                                        [NSNumber numberWithFloat:44100.0], AVSampleRateKey,
+                                        [NSNumber numberWithInt:2], AVNumberOfChannelsKey,
+                                        [NSNumber numberWithInt:128000], AVEncoderBitRateKey,
+                                        [NSData dataWithBytes:&channelLayout length:sizeof(AudioChannelLayout)], AVChannelLayoutKey,
+                                        nil];
+        
+        AVAssetWriterInput *writerInput = [[AVAssetWriterInput alloc] initWithMediaType:AVMediaTypeAudio
+                                                                         outputSettings:outputSettings];
+        [writerInput setExpectsMediaDataInRealTime:NO];
+        [writer addInput:writerInput];
+        
+        //////////
+        [writer startWriting];
+        [writer startSessionAtSourceTime:kCMTimeZero];
+        
+        [reader startReading];
+        dispatch_queue_t mediaInputQueue = dispatch_queue_create("mediaInputQueue", NULL);
+        [writerInput requestMediaDataWhenReadyOnQueue:mediaInputQueue usingBlock:^{
+            
+            NSLog(@"Asset Writer ready : %d", writerInput.readyForMoreMediaData);
+            while (writerInput.readyForMoreMediaData) {
+                CMSampleBufferRef nextBuffer;
+                if ([reader status] == AVAssetReaderStatusReading && (nextBuffer = [readerOutput copyNextSampleBuffer])) {
+                    if (nextBuffer) {
+                        NSLog(@"Adding buffer");
+                        [writerInput appendSampleBuffer:nextBuffer];
+                    }
+                } else {
+                    [writerInput markAsFinished];
+                    
+                    switch ([reader status]) {
+                        case AVAssetReaderStatusReading:
+                            break;
+                        case AVAssetReaderStatusFailed:
+                            [writer cancelWriting];
+                            break;
+                        case AVAssetReaderStatusCompleted:
+                            NSLog(@"Writer completed");
+                            [writer endSessionAtSourceTime:asset.duration];
+                            [writer finishWriting];
+                            
+                            //                     NSData *data = [NSData dataWithContentsOfFile:exportPath];
+                            //                     NSLog(@"Data: %@", data);
+                            
+                            break;
+                    }
+                    break;
+                }
+            }
+            
+        }];
+       
+        
+        /*NSURL* srcUrl = [NSURL fileURLWithPath:srcpath];
         AVURLAsset* audioAsset = [[AVURLAsset alloc] initWithURL:srcUrl options:nil];
+        
         AVAssetExportSession *session = [[AVAssetExportSession alloc] initWithAsset:audioAsset presetName:AVAssetExportPresetAppleM4A];
         session.outputURL = [NSURL fileURLWithPath:targetpath];
         session.outputFileType = AVFileTypeAppleM4A;
@@ -53,7 +136,7 @@
             }
             
             [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
-        }];
+        }];*/
     }
 }
 - (NSArray *)ls {
